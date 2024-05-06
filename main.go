@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/evertras/bubble-table/table"
 )
 
@@ -35,8 +36,14 @@ func newModel() model {
 			table.NewColumn("brand", "Brand", 10).WithFiltered(true),
 			table.NewFlexColumn("model", "Model", 2).WithFiltered(true),
 			table.NewColumn("location", "Location", 18).WithFiltered(true),
-			table.NewColumn("has_qr", "Label", 5),
-		}).Filtered(true).Focused(true).WithPageSize(12).WithTargetWidth(80),
+			table.NewColumn("has_qr", "Label", 5).WithStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#a6da95"))),
+		}).Filtered(true).Focused(true).WithPageSize(12).WithTargetWidth(80).WithMissingDataIndicatorStyled(
+			table.NewStyledCell(
+				"x", lipgloss.NewStyle().Foreground(
+					lipgloss.Color("#ed8796"),
+				),
+			),
+		),
 		tableKeys: keymap.NewTableKeyMap(),
 		help:      help.New(),
 		detail:    nil,
@@ -51,9 +58,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case detail.DetailCloseMsg:
 			m.detail = nil
 			return m, nil
-		default:
-			return m.detail.Update(msg)
 		}
+		newDetail, cmd := m.detail.Update(msg)
+		if d, ok := newDetail.(detail.Model); ok {
+			m.detail = &d
+		}
+		return m, cmd
 	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:

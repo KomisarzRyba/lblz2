@@ -7,12 +7,16 @@ require (
 	github.com/charmbracelet/bubbletea v0.26.1
 )
 
-require github.com/atotto/clipboard v0.1.4 // indirect
+require (
+	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/foize/go.sgr v0.0.0-20140220094842-40bdfc98040c // indirect
+	rsc.io/qr v0.2.0 // indirect
+)
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/boombuler/barcode v1.0.1
-	github.com/charmbracelet/lipgloss v0.9.1 // indirect
+	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/evertras/bubble-table v0.15.8
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -24,6 +28,7 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.4.6 // indirect
+	github.com/taivy/go.btcqr v0.0.0-20200610183132-76c53c83d1bb
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.19.0 // indirect

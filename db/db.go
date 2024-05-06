@@ -19,11 +19,13 @@ type Airtable struct {
 }
 
 type Instrument struct {
-	ID       string `json:"ID"`
-	Type     string `json:"Equipment Type"`
-	Brand    string `json:"Brand"`
-	Model    string `json:"Model"`
-	Location string `json:"Location"`
+	ID       string   `json:"ID"`
+	Type     string   `json:"Equipment Type"`
+	Brand    string   `json:"Brand"`
+	Model    string   `json:"Model"`
+	Location string   `json:"Location"`
+	Color    []string `json:"Color / Material"`
+	Count    int      `json:"Count"`
 	Barcode  struct {
 		Text string `json:"text"`
 	} `json:"Barcode"`
@@ -38,6 +40,9 @@ func (r Record) Row() table.Row {
 	row := table.NewRow(table.RowData{
 		"record_id": r.ID,
 		"id":        r.Fields.ID,
+		"barcode":   r.Fields.Barcode,
+		"color":     r.Fields.Color,
+		"count":     r.Fields.Count,
 		"type":      r.Fields.Type,
 		"brand":     r.Fields.Brand,
 		"model":     r.Fields.Model,
@@ -58,6 +63,13 @@ func RecordFromRow(row table.RowData) Record {
 			Brand:    row["brand"].(string),
 			Model:    row["model"].(string),
 			Location: row["location"].(string),
+			Color:    row["color"].([]string),
+			Count:    row["count"].(int),
+			Barcode: struct {
+				Text string `json:"text"`
+			}{Text: row["barcode"].(struct {
+				Text string `json:"text"`
+			}).Text},
 		},
 	}
 }

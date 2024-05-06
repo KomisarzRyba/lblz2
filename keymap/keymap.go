@@ -67,6 +67,12 @@ func (dkm DetailKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
+func (dkm DetailKeyMap) WithReprint() DetailKeyMap {
+	dkm.Print.SetKeys("r")
+	dkm.Print.SetHelp("r", "reprint")
+	return dkm
+}
+
 func NewDetailKeymap() DetailKeyMap {
 	return DetailKeyMap{
 		Print: key.NewBinding(
@@ -74,7 +80,7 @@ func NewDetailKeymap() DetailKeyMap {
 			key.WithHelp("p", "print"),
 		),
 		Back: key.NewBinding(
-			key.WithKeys("q", "escape", "backspace"),
+			key.WithKeys("q", "esc", "backspace"),
 			key.WithHelp("q/esc", "back"),
 		),
 	}

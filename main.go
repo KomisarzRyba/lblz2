@@ -85,11 +85,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.tableKeys.Select):
 			m.detail = detail.NewModel(db.RecordFromRow(m.table.HighlightedRow().Data), m.airtable)
 		case key.Matches(msg, m.tableKeys.Refresh):
+			if m.table.GetIsFilterInputFocused() {
+				break
+			}
 			m.table = m.table.WithRows([]table.Row{})
 			return m, m.airtable.FetchInstruments()
 		case key.Matches(msg, m.tableKeys.Quit):
+			if m.table.GetIsFilterInputFocused() && msg.String() == "q" {
+				break
+			}
 			return m, tea.Quit
 		case key.Matches(msg, m.tableKeys.Help):
+			if m.table.GetIsFilterInputFocused() {
+				break
+			}
 			m.help.ShowAll = !m.help.ShowAll
 		}
 	case db.PaginatedInstrumentsMsg:

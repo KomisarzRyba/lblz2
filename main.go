@@ -66,9 +66,13 @@ func (m model) Init() tea.Cmd { return m.airtable.FetchInstruments() }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.detail != nil {
-		switch msg.(type) {
+		switch msg := msg.(type) {
 		case detail.DetailCloseMsg:
 			m.detail = nil
+			if msg.UpdatedRecord != nil {
+				m.table = m.table.WithRows([]table.Row{})
+				return m, m.airtable.FetchInstruments()
+			}
 			return m, nil
 		}
 		newDetail, cmd := m.detail.Update(msg)

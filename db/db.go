@@ -167,11 +167,17 @@ func (a *Airtable) UpdateBarcodeField(recordId, code string) tea.Cmd {
 		if err != nil {
 			return UpdateBarcodeFieldMsg{Err: err}
 		}
-		var updatedFieldResponse struct{ Barcode struct{ text string } }
+		var updatedFieldResponse struct {
+			Fields struct {
+				Barcode struct {
+					Text string `json:"text"`
+				}
+			} `json:"fields"`
+		}
 		err = json.Unmarshal(body, &updatedFieldResponse)
 		if err != nil {
 			return UpdateBarcodeFieldMsg{Err: err}
 		}
-		return UpdateBarcodeFieldMsg{UpdatedBarcode: updatedFieldResponse.Barcode.text}
+		return UpdateBarcodeFieldMsg{UpdatedBarcode: updatedFieldResponse.Fields.Barcode.Text}
 	}
 }

@@ -36,7 +36,9 @@ func NewModel(record db.Record, airtable *db.Airtable) *Model {
 
 func (m Model) Init() tea.Cmd { return nil }
 
-type DetailCloseMsg struct{}
+type DetailCloseMsg struct {
+	UpdatedRecord *db.Record
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -67,7 +69,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Err != nil {
 			return m, tea.Println(msg.Err)
 		}
-		return m, func() tea.Msg { return DetailCloseMsg{} }
+		return m, func() tea.Msg { return DetailCloseMsg{UpdatedRecord: &m.record} }
 	}
 	return m, nil
 }

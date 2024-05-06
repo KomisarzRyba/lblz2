@@ -16,9 +16,13 @@ type CreateQrMsg struct {
 	Code string
 }
 
+func QrFilePath(code string) string {
+	return filepath.Join(os.TempDir(), code+".png")
+}
+
 func CreateQr(recordId, instrumentId string) tea.Cmd {
 	return func() tea.Msg {
-		code := strings.Join([]string{recordId, strings.ReplaceAll(instrumentId, " ", "_")}, "_")
+		code := NewCode(recordId, instrumentId)
 		qr, err := newQr(code)
 		if err != nil {
 			return CreateQrMsg{Err: err}
@@ -35,8 +39,12 @@ func CreateQr(recordId, instrumentId string) tea.Cmd {
 	}
 }
 
-func newQr(from string) (barcode.Barcode, error) {
-	qr, err := qr.Encode(from, qr.H, qr.Auto)
+func NewCode(recordId, instrumentId string) string {
+	return strings.Join([]string{recordId, strings.ReplaceAll(instrumentId, " ", "_")}, "_")
+}
+
+func newQr(code string) (barcode.Barcode, error) {
+	qr, err := qr.Encode(code, qr.H, qr.Auto)
 	if err != nil {
 		return nil, err
 	}

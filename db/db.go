@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -134,5 +135,43 @@ func (a *Airtable) FetchPaginatedInstruments(offset string) tea.Cmd {
 			Offset:  instrRes.Offset,
 			Records: instrRes.Records,
 		}
+	}
+}
+
+type UpdateBarcodeFieldMsg struct {
+	Err            error
+	UpdatedBarcode string
+}
+
+func (a *Airtable) UpdateBarcodeField(recordId, code string) tea.Cmd {
+	return func() tea.Msg {
+		url := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", a.baseId, a.tableId, recordId)
+		payload, err := json.Marshal(map[string]interface{}{
+			"fields": map[string]interface{}{
+				"Barcode": map[string]interface{}{
+					"text": code,
+				},
+			},
+		})
+		if err != nil {
+			return UpdateBarcodeFieldMsg{Err: err}
+		}
+		req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payload))
+		req.Header.Set("Authorization", "Bearer "+a.token)
+		req.Header.Set("Content-Type", "application/json")
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return UpdateBarcodeFieldMsg{Err: err}
+		}
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return UpdateBarcodeFieldMsg{Err: err}
+		}
+		var updatedFieldResponse struct{ Barcode struct{ text string } }
+		err = json.Unmarshal(body, &updatedFieldResponse)
+		if err != nil {
+			return UpdateBarcodeFieldMsg{Err: err}
+		}
+		return UpdateBarcodeFieldMsg{UpdatedBarcode: updatedFieldResponse.Barcode.text}
 	}
 }

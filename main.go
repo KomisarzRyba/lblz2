@@ -71,7 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.tableKeys.Select):
-			m.detail = detail.NewModel(db.RecordFromRow(m.table.HighlightedRow().Data))
+			m.detail = detail.NewModel(db.RecordFromRow(m.table.HighlightedRow().Data), m.airtable)
 		case key.Matches(msg, m.tableKeys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.tableKeys.Help):

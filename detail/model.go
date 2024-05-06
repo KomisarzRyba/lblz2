@@ -6,6 +6,7 @@ import (
 
 	"github.com/KomisarzRyba/lblz2/db"
 	"github.com/KomisarzRyba/lblz2/keymap"
+	"github.com/KomisarzRyba/lblz2/qrs"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,16 +15,18 @@ import (
 )
 
 type Model struct {
-	record db.Record
-	keys   keymap.DetailKeyMap
-	help   help.Model
+	record   db.Record
+	keys     keymap.DetailKeyMap
+	help     help.Model
+	airtable *db.Airtable
 }
 
-func NewModel(record db.Record) *Model {
+func NewModel(record db.Record, airtable *db.Airtable) *Model {
 	model := &Model{
-		record: record,
-		keys:   keymap.NewDetailKeymap(),
-		help:   help.New(),
+		record:   record,
+		keys:     keymap.NewDetailKeymap(),
+		help:     help.New(),
+		airtable: airtable,
 	}
 	if record.Fields.Barcode.Text != "" {
 		model.keys = model.keys.WithReprint()
@@ -42,8 +45,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Back):
 			return m, func() tea.Msg { return DetailCloseMsg{} }
 		case key.Matches(msg, m.keys.Print):
-			return m, tea.Println("printing " + m.record.ID)
+			return m, qrs.CreateQr(m.record.ID, m.record.Fields.ID)
 		}
+	case qrs.CreateQrMsg:
+		if msg.Err != nil {
+			return m, tea.Println(msg.Err)
+		}
+		return m, tea.Batch(
+			tea.Println("QR generated successfully, updating records"),
+			m.airtable.UpdateBarcodeField(m.record.ID, msg.Code),
+		)
+	case db.UpdateBarcodeFieldMsg:
+		if msg.Err != nil {
+			return m, tea.Println(msg.Err)
+		}
+		return m, tea.Batch(
+			tea.Println("Record successfully updated, printing"),
+			qrs.RequestPrint(qrs.NewCode(m.record.ID, m.record.Fields.ID)),
+		)
+	case qrs.RequestPrintMsg:
+		if msg.Err != nil {
+			return m, tea.Println(msg.Err)
+		}
+		return m, func() tea.Msg { return DetailCloseMsg{} }
 	}
 	return m, nil
 }
@@ -64,7 +88,7 @@ func (m Model) View() string {
 			),
 		),
 	)
-	s.WriteString("\n")
+	s.WriteString("\n\n")
 	if code := m.record.Fields.Barcode.Text; code != "" {
 		qr, err := qrt.Generate(code)
 		if err == nil {

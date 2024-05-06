@@ -3,21 +3,22 @@ package keymap
 import "github.com/charmbracelet/bubbles/key"
 
 type TableKeyMap struct {
-	Up     key.Binding
-	Down   key.Binding
-	Select key.Binding
-	Filter key.Binding
-	Quit   key.Binding
-	Help   key.Binding
+	Up      key.Binding
+	Down    key.Binding
+	Select  key.Binding
+	Filter  key.Binding
+	Refresh key.Binding
+	Quit    key.Binding
+	Help    key.Binding
 }
 
 func (tkm TableKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{tkm.Select, tkm.Filter, tkm.Quit, tkm.Help}
+	return []key.Binding{tkm.Select, tkm.Filter, tkm.Refresh, tkm.Quit, tkm.Help}
 }
 
 func (tkm TableKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{tkm.Select, tkm.Filter},
+		{tkm.Select, tkm.Filter, tkm.Refresh},
 		{tkm.Up, tkm.Down},
 		{tkm.Help, tkm.Quit},
 	}
@@ -40,6 +41,10 @@ func NewTableKeyMap() TableKeyMap {
 		Filter: key.NewBinding(
 			key.WithKeys("/"),
 			key.WithHelp("/", "filter"),
+		),
+		Refresh: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "refresh"),
 		),
 		Quit: key.NewBinding(
 			key.WithKeys("q", "ctrl+c"),

@@ -61,7 +61,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Batch(
 			tea.Println("Record successfully updated, printing"),
-			qrs.RequestPrint(qrs.NewCode(m.record.ID, m.record.Fields.ID)),
+			qrs.RequestPrint(msg.UpdatedBarcode),
 		)
 	case qrs.RequestPrintMsg:
 		if msg.Err != nil {

@@ -5,19 +5,21 @@ import (
 	"os"
 
 	"github.com/KomisarzRyba/lblz2/db"
+	"github.com/KomisarzRyba/lblz2/detail"
 	"github.com/KomisarzRyba/lblz2/keymap"
+	"github.com/KomisarzRyba/lblz2/qrs"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/evertras/bubble-table/table"
 )
 
 type model struct {
-	airtable   *db.Airtable
-	isSelected bool
-	table      table.Model
-	tableKeys  keymap.TableKeyMap
-	help       help.Model
+	airtable  *db.Airtable
+	table     table.Model
+	tableKeys keymap.TableKeyMap
+	help      help.Model
+	detail    *detail.Model
 }
 
 func newModel() model {
@@ -27,48 +29,61 @@ func newModel() model {
 		os.Exit(1)
 	}
 	return model{
-		airtable:   airtable,
-		isSelected: false,
-		table: table.New(table.WithColumns([]table.Column{
-			{Title: "Type", Width: 12},
-			{Title: "Brand", Width: 12},
-			{Title: "Model", Width: 12},
-			{Title: "Location", Width: 24},
-		}), table.WithFocused(true)),
+		airtable: airtable,
+		table: table.New([]table.Column{
+			table.NewFlexColumn("type", "Type", 1).WithFiltered(true),
+			table.NewColumn("brand", "Brand", 10).WithFiltered(true),
+			table.NewFlexColumn("model", "Model", 2).WithFiltered(true),
+			table.NewColumn("location", "Location", 18).WithFiltered(true),
+			table.NewColumn("has_qr", "Label", 5),
+		}).Filtered(true).Focused(true).WithPageSize(12).WithTargetWidth(80),
 		tableKeys: keymap.NewTableKeyMap(),
 		help:      help.New(),
+		detail:    nil,
 	}
 }
 
 func (m model) Init() tea.Cmd { return m.airtable.FetchInstruments() }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.detail != nil {
+		switch msg.(type) {
+		case detail.DetailCloseMsg:
+			m.detail = nil
+			return m, nil
+		default:
+			return m.detail.Update(msg)
+		}
+	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 	case tea.KeyMsg:
-		if !m.isSelected {
-			switch {
-			case key.Matches(msg, m.tableKeys.Select):
-				return m, tea.Println(m.table.SelectedRow())
-			case key.Matches(msg, m.tableKeys.Quit):
-				return m, tea.Quit
-			case key.Matches(msg, m.tableKeys.Help):
-				m.help.ShowAll = !m.help.ShowAll
-			}
+		switch {
+		case key.Matches(msg, m.tableKeys.Select):
+			m.detail = detail.NewModel(db.RecordFromRow(m.table.HighlightedRow().Data))
+		case key.Matches(msg, m.tableKeys.Quit):
+			return m, tea.Quit
+		case key.Matches(msg, m.tableKeys.Help):
+			m.help.ShowAll = !m.help.ShowAll
 		}
 	case db.PaginatedInstrumentsMsg:
-		if err := msg.Err; err != nil {
+		if msg.Err != nil {
 			return m, tea.Println(msg.Err)
 		}
-		newRows := make([]table.Row, len(msg.Instruments))
-		for i, instr := range msg.Instruments {
-			newRows[i] = instr.Row()
+		newRows := make([]table.Row, len(msg.Records))
+		for i, record := range msg.Records {
+			newRows[i] = record.Row()
 		}
-		m.table.SetRows(append(m.table.Rows(), newRows...))
+		m.table = m.table.WithRows(append(m.table.GetVisibleRows(), newRows...))
 		if msg.Offset != "" {
 			return m, m.airtable.FetchPaginatedInstruments(msg.Offset)
 		}
+	case qrs.CreateQrMsg:
+		if msg.Err != nil {
+			return m, tea.Println(msg.Err)
+		}
+		return m, tea.Println(msg.Code)
 	}
 	var cmd tea.Cmd
 	m.table, cmd = m.table.Update(msg)
@@ -76,7 +91,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf("%s\n\n%s", m.help.View(m.tableKeys), m.table.View())
+	if m.detail != nil {
+		return m.detail.View()
+	}
+	return fmt.Sprintf("%s\n%s", m.help.View(m.tableKeys), m.table.View())
 }
 
 func main() {

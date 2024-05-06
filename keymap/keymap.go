@@ -6,19 +6,20 @@ type TableKeyMap struct {
 	Up     key.Binding
 	Down   key.Binding
 	Select key.Binding
+	Filter key.Binding
 	Quit   key.Binding
 	Help   key.Binding
 }
 
 func (tkm TableKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{tkm.Select, tkm.Quit, tkm.Help}
+	return []key.Binding{tkm.Select, tkm.Filter, tkm.Quit, tkm.Help}
 }
 
 func (tkm TableKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{tkm.Select, tkm.Quit},
+		{tkm.Select, tkm.Filter},
 		{tkm.Up, tkm.Down},
-		{tkm.Help},
+		{tkm.Help, tkm.Quit},
 	}
 }
 
@@ -36,8 +37,12 @@ func NewTableKeyMap() TableKeyMap {
 			key.WithKeys("enter", "space"),
 			key.WithHelp("enter", "select"),
 		),
+		Filter: key.NewBinding(
+			key.WithKeys("/"),
+			key.WithHelp("/", "filter"),
+		),
 		Quit: key.NewBinding(
-			key.WithKeys("q", "esc", "ctrl+c"),
+			key.WithKeys("q", "ctrl+c"),
 			key.WithHelp("q", "quit"),
 		),
 		Help: key.NewBinding(
@@ -47,18 +52,30 @@ func NewTableKeyMap() TableKeyMap {
 	}
 }
 
-type ItemKeyMap struct {
+type DetailKeyMap struct {
 	Print key.Binding
 	Back  key.Binding
 }
 
-func (ikm ItemKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{ikm.Print, ikm.Back}
+func (dkm DetailKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{dkm.Print, dkm.Back}
 }
 
-// TODO: check if required
-// func (ikm ItemKeyMap) FullHelp() [][]key.Binding {
-// 	return [][]key.Binding{
-// 		{ikm.Print, ikm.Back},
-// 	}
-// }
+func (dkm DetailKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{dkm.Print, dkm.Back},
+	}
+}
+
+func NewDetailKeymap() DetailKeyMap {
+	return DetailKeyMap{
+		Print: key.NewBinding(
+			key.WithKeys("p"),
+			key.WithHelp("p", "print"),
+		),
+		Back: key.NewBinding(
+			key.WithKeys("q", "escape", "backspace"),
+			key.WithHelp("q/esc", "back"),
+		),
+	}
+}

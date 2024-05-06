@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/evertras/bubble-table/table"
 )
 
 type Airtable struct {
@@ -24,19 +24,47 @@ type Instrument struct {
 	Brand    string `json:"Brand"`
 	Model    string `json:"Model"`
 	Location string `json:"Location"`
+	Barcode  struct {
+		Text string `json:"text"`
+	} `json:"Barcode"`
 }
 
-func (i Instrument) Row() table.Row {
-	return table.Row{i.Type, i.Brand, i.Model, i.Location}
-}
-
-type instrumentWrapper struct {
+type Record struct {
+	ID     string     `json:"id"`
 	Fields Instrument `json:"fields"`
 }
 
+func (r Record) Row() table.Row {
+	row := table.NewRow(table.RowData{
+		"record_id": r.ID,
+		"id":        r.Fields.ID,
+		"type":      r.Fields.Type,
+		"brand":     r.Fields.Brand,
+		"model":     r.Fields.Model,
+		"location":  r.Fields.Location,
+	})
+	if r.Fields.Barcode.Text != "" {
+		row.Data["has_qr"] = "✓"
+	}
+	return row
+}
+
+func RecordFromRow(row table.RowData) Record {
+	return Record{
+		ID: row["record_id"].(string),
+		Fields: Instrument{
+			ID:       row["id"].(string),
+			Type:     row["type"].(string),
+			Brand:    row["brand"].(string),
+			Model:    row["model"].(string),
+			Location: row["location"].(string),
+		},
+	}
+}
+
 type instrumentResponse struct {
-	Records []instrumentWrapper `json:"records"`
-	Offset  string              `json:"offset"`
+	Records []Record `json:"records"`
+	Offset  string   `json:"offset"`
 }
 
 func NewAirtableFromEnv() (*Airtable, error) {
@@ -56,9 +84,9 @@ func NewAirtableFromEnv() (*Airtable, error) {
 }
 
 type PaginatedInstrumentsMsg struct {
-	Err         error
-	Instruments []Instrument
-	Offset      string
+	Err     error
+	Records []Record
+	Offset  string
 }
 
 func (a *Airtable) FetchInstruments() tea.Cmd {
@@ -89,14 +117,10 @@ func (a *Airtable) FetchPaginatedInstruments(offset string) tea.Cmd {
 		if err != nil {
 			return PaginatedInstrumentsMsg{Err: err}
 		}
-		instruments := make([]Instrument, len(instrRes.Records))
-		for i, r := range instrRes.Records {
-			instruments[i] = r.Fields
-		}
 		return PaginatedInstrumentsMsg{
-			Err:         nil,
-			Offset:      instrRes.Offset,
-			Instruments: instruments,
+			Err:     nil,
+			Offset:  instrRes.Offset,
+			Records: instrRes.Records,
 		}
 	}
 }

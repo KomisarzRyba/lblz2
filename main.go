@@ -32,17 +32,29 @@ func newModel() model {
 	return model{
 		airtable: airtable,
 		table: table.New([]table.Column{
-			table.NewFlexColumn("type", "Type", 1).WithFiltered(true),
-			table.NewColumn("brand", "Brand", 10).WithFiltered(true),
-			table.NewFlexColumn("model", "Model", 2).WithFiltered(true),
-			table.NewColumn("location", "Location", 18).WithFiltered(true),
-			table.NewColumn("has_qr", "Label", 5).WithStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#a6da95"))),
+			table.NewFlexColumn("type", "Type", 1).WithFiltered(true).WithStyle(
+				lipgloss.NewStyle().Foreground(lipgloss.Color("#f4dbd6")),
+			),
+			table.NewColumn("brand", "Brand", 10).WithFiltered(true).WithStyle(
+				lipgloss.NewStyle().Foreground(lipgloss.Color("#f0c6c6")),
+			),
+			table.NewFlexColumn("model", "Model", 2).WithFiltered(true).WithStyle(
+				lipgloss.NewStyle().Foreground(lipgloss.Color("#f5bde6")),
+			),
+			table.NewColumn("location", "Location", 18).WithFiltered(true).WithStyle(
+				lipgloss.NewStyle().Foreground(lipgloss.Color("#f5a97f")),
+			),
+			table.NewColumn("has_qr", "Label", 5).WithStyle(
+				lipgloss.NewStyle().Foreground(lipgloss.Color("#a6da95")),
+			),
 		}).Filtered(true).Focused(true).WithPageSize(12).WithTargetWidth(80).WithMissingDataIndicatorStyled(
 			table.NewStyledCell(
 				"x", lipgloss.NewStyle().Foreground(
 					lipgloss.Color("#ed8796"),
 				),
 			),
+		).WithBaseStyle(
+			lipgloss.NewStyle().BorderForeground(lipgloss.Color("#b7bdf8")),
 		),
 		tableKeys: keymap.NewTableKeyMap(),
 		help:      help.New(),

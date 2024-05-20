@@ -80,6 +80,10 @@ type instrumentResponse struct {
 	Offset  string   `json:"offset"`
 }
 
+type instrumentError struct {
+	Message string `json:"message"`
+}
+
 func NewAirtableFromEnv() (*Airtable, error) {
 	token := os.Getenv("AIRTABLE_TOKEN")
 	if token == "" {
@@ -112,6 +116,7 @@ func (a *Airtable) FetchPaginatedInstruments(offset string) tea.Cmd {
 		if offset != "" {
 			url += "?offset=" + offset
 		}
+		// url += "&view=Grid" // INFO: temp
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return PaginatedInstrumentsMsg{Err: err}
@@ -124,6 +129,16 @@ func (a *Airtable) FetchPaginatedInstruments(offset string) tea.Cmd {
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return PaginatedInstrumentsMsg{Err: err}
+		}
+		if res.StatusCode != 200 {
+			var instrErr instrumentError
+			err = json.Unmarshal(body, &instrErr)
+			if err != nil {
+				panic(err)
+			}
+			return PaginatedInstrumentsMsg{
+				Err: errors.New(fmt.Sprintf("error: %s, message: %s", res.Status, instrErr.Message)),
+			}
 		}
 		var instrRes instrumentResponse
 		err = json.Unmarshal(body, &instrRes)
